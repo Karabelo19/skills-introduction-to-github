@@ -1,0 +1,178 @@
+body {
+  font-family: Arial, sans-serif;
+  color: #fff; /* General text color is white */
+  margin: 0;
+  padding: 0;
+  background-image: url('/static/cold_room_bg.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-color: rgba(0, 0, 0, 0.6); /* Fallback color */
+  background-blend-mode: darken;
+  height: 100vh; /* Use viewport height to ensure full-screen */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.container {
+  background-color: rgba(0, 0, 0, 0.6);
+  padding: 20px;
+  border-radius: 10px;
+  max-width: 600px;
+  width: 100%;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+  text-align: center; /* Center text inside the container */
+}
+.container img {
+  max-width: 100%; /* Ensures the image doesn't overflow the container */
+  height: auto; /* Maintains the aspect ratio */
+  border-radius: 10px; /* Optional: Rounded corners for images */
+  margin-bottom: 20px; /* Optional: Adds space below images */
+}
+
+
+p {
+  color:black;
+
+}
+ul {
+  color:black;
+}
+h1, h2 {
+  color: #2c3e50; /* Dark text color for headers */
+}
+
+a {
+  color: #2980b9;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.container {
+  max-width: 900px;
+  margin: auto;
+  background-color: #fff;
+  padding: 25px;
+  box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+  border-radius: 8px;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+label {
+  font-weight: bold;
+}
+
+input[type="text"],
+input[type="password"],
+select {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  width: 100%;
+}
+
+button,
+input[type="submit"] {
+  background-color: #2980b9;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:hover,
+input[type="submit"]:hover {
+  background-color: #1c5980;
+}
+
+.alert {
+  padding: 10px;
+  background-color: #e74c3c;
+  color: white;
+  margin-bottom: 15px;
+  border-radius: 5px;
+}
+
+.success {
+  background-color: #2ecc71;
+}
+
+.plot-image {
+  max-width: 100%;
+  height: auto;
+  margin-top: 20px;
+  border: 1px solid #ddd;
+  padding: 5px;
+  background-color: white;
+}
+
+/* Add styles for the table and table data */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+th, td {
+  padding: 12px;
+  text-align: center;
+  border: 1px solid #ddd;
+  color: black; /* Set text color of table data to black */
+}
+
+th {
+  background-color: #2980b9;
+  color: white; /* White color for header text */
+}
+
+tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
+tr:nth-child(odd) {
+  background-color: #f9f9f9;
+}
+
+tr:hover {
+  background-color: #ddd;
+}
+.flash {
+  margin: 10px 0;
+  padding: 12px;
+  border-radius: 5px;
+  font-weight: bold;
+}
+
+.flash.danger {
+  background-color: grey;
+  color: black;
+}
+label {
+  color: black;
+}
+.flash.success {
+  color: green;
+  font-weight: bold;
+  padding: 10px;
+  background-color: #e0ffe0;
+  border: 1px solid #00a000;
+  border-radius: 5px;
+  margin-bottom: 15px;
+}
+
+.flash.error {
+  color: red;
+  background-color: #ffe0e0;
+  border: 1px solid #a00000;
+}
