@@ -1,0 +1,228 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "virtualNetwork1Name":{
+            "type":"string",
+            "defaultValue":"vnet01"
+        },
+        "virtualNetwork2Name":{
+            "type":"string",
+            "defaultValue":"vnet02"
+        },
+        "vnet1Location":{
+            "type":"string",
+            "defaultValue":"East US"
+        },
+        "vnet2Location": {
+            "type": "string",
+            "defaultValue": "West US"
+        }
+    },
+    "functions": [],
+    "variables": {
+        "vnet01Subnet1Name": "workloadSubnet1",
+        "vnet01Subnet2Name": "sandboxSubnet",
+        "vnet02SubnetName":  "workloadSubnet2",
+        "vnet01AddressPrefix": "192.168.0.0/16",
+        "vnet02AddressPrefix": "10.0.0.0/16",
+        "vnet01Subnet1Address": "192.168.0.16/28",
+        "vnet01Subnet2Address": "192.168.0.32/28",
+        "vnet02SubnetAddress": "10.0.0.16/28",
+        "vnet1Subnet1NSG": "vnet1NSG1",
+        "vnet1Subnet2NSG": "vnet1NSG2",
+        "vnet2SubnetNSG": "vnet2NSG",
+        "vnetNSGSSHRuleName": "AllowSandboxSSH"
+        
+    },
+    "resources": [
+        {
+            "name": "[variables('vnet1Subnet2NSG')]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2023-04-01",
+            "location": "[parameters('vnet1Location')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "[variables('vnetNSGSSHRuleName')]",
+                        "properties": {
+                            "description": "description",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "[variables('vnet01Subnet2Address')]",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+
+            }
+        },
+        
+   {
+    "name": "[variables('vnet1Subnet1NSG')]",
+    "type": "Microsoft.Network/networkSecurityGroups",
+    "apiVersion": "2023-04-01",
+    "location": "[parameters('vnet1Location')]",
+    "properties": {
+        "securityRules": [
+            {
+                "name": "[variables('vnetNSGSSHRuleName')]",
+                "properties": {
+                    "description": "description",
+                    "protocol": "Tcp",
+                    "sourcePortRange": "*",
+                    "destinationPortRange": "22",
+                    "sourceAddressPrefix": "[variables('vnet01Subnet2Address')]",
+                    "destinationAddressPrefix": "[variables('vnet01Subnet1Address')]",
+                    "access": "Allow",
+                    "priority": 100,
+                    "direction": "Inbound"
+                }
+            }
+        ]
+    
+    }
+    },
+
+  {
+    "name": "[variables('vnet2SubnetNSG')]",
+    "type": "Microsoft.Network/networkSecurityGroups",
+    "apiVersion": "2023-04-01",
+    "location": "[parameters('vnet2Location')]",
+    "properties": {
+        "securityRules": [
+            {
+                "name": "[variables('vnetNSGSSHRuleName')]",
+                "properties": {
+                    "description": "description",
+                    "protocol": "Tcp",
+                    "sourcePortRange": "*",
+                    "destinationPortRange": "22",
+                    "sourceAddressPrefix": "[variables('vnet01Subnet2Address')]",
+                    "destinationAddressPrefix": "[variables('vnet02SubnetAddress')]",
+                    "access": "Allow",
+                    "priority": 100,
+                    "direction": "Inbound"
+                }
+            }
+        ]
+    }
+  },
+        {
+            "name": "[parameters('virtualNetwork1Name')]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2023-04-01",
+            "location": "[parameters('vnet1Location')]",
+            "tags": {
+                "displayName": "[parameters('virtualNetwork1Name')]"
+            },
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('vnet01AddressPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('vnet01Subnet1Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('vnet01Subnet1Address')]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('vnet1Subnet1NSG'))]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "[variables('vnet01Subnet2Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('vnet01Subnet2Address')]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('vnet1Subnet2NSG'))]"
+                            }
+                         
+                        }
+                    }
+                ]
+            
+            }
+        },
+        {
+            "name": "[parameters('virtualNetwork2Name')]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2023-04-01",
+            "location": "[parameters('vnet2Location')]",
+            "tags": {
+                "displayName": "[parameters('virtualNetwork2Name')]"
+            },
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('vnet02AddressPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('vnet02SubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[variables('vnet02SubnetAddress')]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('vnet2SubnetNSG'))]"
+                            }
+                           
+                            }
+                         
+                        
+                    }
+                    
+                ]
+            }
+        },
+        {
+            "name":"vnet01/vnet1tovnet2Peering",
+            "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+            "apiVersion": "2023-04-01",
+            "location":"[parameters('vnet1Location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetwork1Name'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetwork2Name'))]"
+            ],
+            "properties":{
+                "allowForwardedTraffic": false,
+                "allowVirtualNetworkAccess": true,
+                "allowGatewayTransit": false,
+                "useRemoteGateways": false,
+                "remoteVirtualNetwork": {
+                    "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetwork2Name'))]"
+                }
+
+            }
+    
+        },
+        {
+            "name": "vnet02/vnet2tovnet2Peering",
+            "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+            "apiVersion": "2023-04-01",
+            "location": "[parameters('vnet2Location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetwork1Name'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetwork2Name'))]"
+            ],
+            "properties": {
+                "allowForwardedTraffic": false,
+                "allowVirtualNetworkAccess": true,
+                "allowGatewayTransit": false,
+                "useRemoteGateways": false,
+                "remoteVirtualNetwork": {
+                    "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetwork1Name'))]"
+                }
+
+            }
+
+        }
+    ],
+    "outputs": {}
+}
