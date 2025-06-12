@@ -1,0 +1,295 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vnet1PublicIP": {
+            "type": "string",
+            "defaultValue": "vnet01IP",
+            "metadata": {
+                "description": "description"
+            }
+        },
+        "vnet2PublicIP": {
+            "type": "string",
+            "defaultValue": "vnet02IP",
+            "metadata": {
+                "description": "description"
+            }
+        },
+        "virtualNetwork1": {
+           "type": "string",
+           "defaultValue":"vnet01",
+            "metadata": {
+                    "description": "description"
+                }
+        },
+         "virtualNetwork2": {
+           "type": "string",
+           "defaultValue":"vnet02",
+            "metadata": {
+                    "description": "description"
+                }
+        },
+        "vpnGateway01": {
+            "type": "string",
+            "defaultValue":"vnp-eus",
+            "metadata": {
+                "description": "description"
+            }
+        },
+        
+        "vpnGateway02": {
+            "type": "string",
+            "defaultValue":"vpn-wus",
+            "metadata": {
+                "description": "description"
+            }
+        },
+        "connName1": {
+            "type": "string",
+            "defaultValue":"east-to-west",
+            "metadata": {
+                "description": "Vnet1 Gateway  to  Vnet2 Gateway"
+            }
+        },
+        "connName2": {
+            "type": "string",
+            "defaultValue":"west-to-east",
+            "metadata": {
+                "description": "Vnet2 Gateway  to  Vnet1 Gateway"
+            }
+        },
+        "vnet1Location": {
+            "type": "string",
+            "defaultValue":"East US",
+            "metadata": {
+                "description": "description"
+            }
+        },
+        "vnet2Location": {
+            "type": "string",
+            "defaultValue":"West US",
+            "metadata": {
+                "description": "description"
+            }
+        }
+    },
+    "functions": [],
+    "variables": {
+        "vnet02Subnet1":"workloadSubnet02",
+        "vnet02Subnet2":"GatewaySubnet",
+        "vnet01Subnet1":"workloadSubnet01",
+        "vnet01Subnet2":"GatewaySubnet"
+    },
+    "resources": [
+        {
+            "name": "[parameters('vnet1PublicIP')]",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2023-04-01",
+            "location": "[parameters('vnet1Location')]",
+            "tags": {
+                "displayName": "[parameters('vnet1PublicIP')]"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "dnsSettings": {
+                    "domainNameLabel": "ops3dns"
+                }
+            }
+        },
+      {
+        "name": "[parameters('vnet2PublicIP')]",
+        "type": "Microsoft.Network/publicIPAddresses",
+        "apiVersion": "2023-04-01",
+        "location": "[parameters('vnet2Location')]",
+        "tags": {
+            "displayName": "[parameters('vnet2PublicIP')]"
+        },
+        "properties": {
+            "publicIPAllocationMethod": "Dynamic",
+            "dnsSettings": {
+                "domainNameLabel": "ops3dns"
+            }
+        }
+      },
+    {
+        "name": "[parameters('virtualNetwork1')]",
+        "type": "Microsoft.Network/virtualNetworks",
+        "apiVersion": "2023-04-01",
+        "location": "[parameters('vnet1Location')]",
+        "tags": {
+            "displayName": "[parameters('virtualNetwork1')]"
+        },
+        "properties": {
+            
+            "addressSpace": {
+                "addressPrefixes": [
+                    "10.0.0.0/16"
+                ]
+            },
+            "subnets": [
+                {
+                    "name": "[variables('vnet01Subnet1')]",
+                    "properties": {
+                        "addressPrefix": "10.0.0.0/28"
+                    }
+                },
+                {
+                    "name": "[variables('vnet01Subnet2')]",
+                    "properties": {
+                        "addressPrefix": "10.0.0.16/28"
+                    }
+                }
+            ]
+        }
+    
+    },
+    {
+        "name": "[parameters('virtualNetwork2')]",
+        "type": "Microsoft.Network/virtualNetworks",
+        "apiVersion": "2023-04-01",
+        "location": "[parameters('vnet2Location')]",
+        "tags": {
+            "displayName": "[parameters('virtualNetwork2')]"
+        },
+        "properties": {
+            "addressSpace": {
+                "addressPrefixes": [
+                    "192.168.0.0/16"
+                ]
+            },
+            "subnets": [
+                {
+                    "name": "[variables('vnet02Subnet1')]",
+                    "properties": {
+                        "addressPrefix": "192.168.0.0/28"
+                    }
+                },
+                {
+                    "name": "[variables('vnet02Subnet2')]",
+                    "properties": {
+                        "addressPrefix": "192.168.0.16/28"
+                    }
+                }
+            ]
+        }
+    },
+{
+    "name": "[parameters('vpnGateway01')]",
+    "type": "Microsoft.Network/virtualNetworkGateways",
+    "apiVersion": "2023-04-01",
+    "location": "[parameters('vnet1Location')]",
+    "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('vnet1PublicIP'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetwork1'))]"
+    ],
+    "properties": {
+        "ipConfigurations": [
+            {
+                "name": "vnetGatewayConfig",
+                "properties": {
+                    "privateIPAllocationMethod": "Dynamic",
+                    "subnet": {
+                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetwork1'), variables('vnet01Subnet2'))]"
+                    },
+                    "publicIPAddress": {
+                        "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('vnet1PublicIP'))]"
+                    }
+                }
+            }
+        ],
+        "sku": {
+            "name": "Basic",
+            "tier": "Basic"
+        },
+        "gatewayType": "Vpn",
+        "vpnType": "RouteBased",
+        "enableBgp": false
+    }
+},
+ {
+    "name": "[parameters('vpnGateway02')]",
+    "type": "Microsoft.Network/virtualNetworkGateways",
+    "apiVersion": "2023-04-01",
+    "location": "[parameters('vnet2Location')]",
+    "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('vnet2PublicIP'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetwork2'))]"
+    ],
+    "properties": {
+        "ipConfigurations": [
+            {
+                "name": "vnetGatewayConfig",
+                "properties": {
+                    "privateIPAllocationMethod": "Dynamic",
+                    "subnet": {
+                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetwork2'), variables('vnet02Subnet2'))]"
+                    },
+                    "publicIPAddress": {
+                        "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('vnet2PublicIP'))]"
+                    }
+                }
+            }
+        ],
+        "sku": {
+            "name": "Basic",
+            "tier": "Basic"
+        },
+        "gatewayType": "Vpn",
+        "vpnType": "RouteBased",
+        "enableBgp": false
+    }
+ },
+
+    {
+        "name": "[parameters('connName1')]",
+        "type": "Microsoft.Network/connections",
+        "apiVersion": "2023-04-01",
+        "location": "[parameters('vnet1Location')]",
+        "dependsOn": [
+            "[resourceId('Microsoft.Network/virtualNetworkGateways', parameters('vpnGateway01'))]",
+            "[resourceId('Microsoft.Network/virtualNetworkGateways', parameters('vpnGateway02'))]"
+        ],
+        "properties": {
+            "virtualNetworkGateway1": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworkGateways', parameters('vpnGateway01'))]",
+                "properties": {}
+            },
+            "virtualNetworkGateway2": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworkGateways', parameters('vpnGateway02'))]",
+                "properties": {}
+            },
+            
+            "connectionType": "Vnet2Vnet",
+            "routingWeight": 3,
+            "sharedKey": "OPS3@VUT"
+            
+        }
+    },
+ {
+    "name": "[parameters('connName2')]",
+    "type": "Microsoft.Network/connections",
+    "apiVersion": "2023-04-01",
+    "location": "[parameters('vnet2Location')]",
+    "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworkGateways', parameters('vpnGateway02'))]",
+       "[resourceId('Microsoft.Network/virtualNetworkGateways', parameters('vpnGateway01'))]"
+    ],
+    "properties": {
+        "virtualNetworkGateway1": {
+            "id": "[resourceId('Microsoft.Network/virtualNetworkGateways', parameters('vpnGateway02'))]",
+            "properties": {}
+        },
+        "virtualNetworkGateway2": {
+            "id": "[resourceId('Microsoft.Network/virtualNetworkGateways', parameters('vpnGateway01'))]",
+            "properties": {}
+        },
+        "connectionType": "Vnet2Vnet",
+        "routingWeight": 3,
+        "sharedKey": "OPS3@VUT"
+    }
+ }
+
+    ],
+    "outputs": {}
+}
