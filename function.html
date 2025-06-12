@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+    <h1 id="heading" onclick="changeText()">JavaScript</h1>
+    <p id="addition"></p>
+    <script>
+        /*its gonna fire up a certain action when we use the onclick- when you click on an element you can make something happen*/
+        /*if the condition is true then change the onclick else javascript- if(this.innerHTML=='JavaScript'){this.innerHTML='is awesome'}else{this.innerHTML='Javascript'}*/
+        /*function*/
+        /*remember to call a text with ()*/
+        /*this refered it to the h1 test so it wasnt suppose to be included on funtions...*/
+        /*create a function that you can send something to it the receive a feed back*/
+
+        addNumbers(15,7);
+        document.getElementById("addition").innerHTML==addNumbers(15,7);/*values for num1 and num 2*/
+        function changeText(){
+            if(document.getElementById("heading").innerHTML=='JavaScript'){
+                document.getElementById("heading").innerHTML='is awesome'}
+            else{
+                document.getElementById("heading").innerHTML='Javascript'
+            }
+        }
+        function addNumbers(num1, num2){
+            /*document.getElementById("addition").innerHTML = num1 + num2;*/
+            return num1 + num2;/*it sends back data*/
+        }
+    </script>
+</body>
+</html>

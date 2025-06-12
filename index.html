@@ -2,17 +2,56 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Smart Cold Room</title>
-    <link
-    rel="stylesheet"
-    href="{{ url_for('static', filename='style.css') }}"
-  />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
-    <div class="container" style="text-align: center;">
-        <h1>Welcome to the Smart Cold Room Monitoring System</h1>
-        <p><a href="{{ url_for('login') }}">Click here to login</a></p>
-    </div>
+    <h1 id="heading1">Hello</h1>
+    <p id="paragraph1">Everyone</p>
+    <p id="paragraph2">Every</p>
+    <p id="paragraph3">one</p>
+    <p id="paragraph4">Its fun</p>
+    <h1 id="heading2">Hello</h1>
+    <p id="paragraph5">Everyone</p>
+    <p id="paragraph5"></p>
+    <script>
+        /*This is how we begin the java script. on the hello we replaced it with this is the javaScript in the javascript*/
+        /*innerHTML IS THE HEADING 1*/
+        /*this is used to insert text into your web page and how to display text into my web page*/ 
+        document.getElementById("heading1").innerHTML = ("This is JavaScript");
+        document.getElementById("paragraph1").innerHTML = ("I'm having fun!!");
+        /*how to input numbers instead of texts, dont include the double codes*/
+        document.getElementById("paragraph2").innerHTML = (5);
+        /*how to do calculations, numbers are not displayed with double codes*/
+        document.getElementById("paragraph3").innerHTML = (5 + 9);
+        /*You can use plus sign to add two texts or numbers together*/
+        document.getElementById("paragraph4").innerHTML = ("JavaScript" + " is fun");
+
+        /*javascript variables(text /)- it is used to store data, to retrieve a variable you have to create a variable that will store data */
+        /* To create a variable we use var*/
+        var text1;/*it is used to declare a variable which is empty*/
+        var text2;
+        var text3;
+        /* variables for numbers*/ 
+        var numA = 7;
+        var numB = 10;
+        /*To assign values to the variables*/
+        text1 = "Hello everyone on planet Earth.";
+        text2 = "I love learning JS";
+        text3 = " JS is awesome";
+        /*HOW TO USE VARIABLES OR SEE IF THEY ARE DECLARED OR NOT*/
+        document.getElementByID("heading2").innerHTML = (text1);
+        document.getElementByID("paragraph5").innerHTML = (text2);
+        document.getElementByID("paragraph5").innerHTML = (text2 + text3);
+        document.getElementByID("paragraph6").innerHTML = (numA);
+        document.getElementByID("paragraph6").innerHTML = (numB - numA);
+        /*INCLUDE TEXT AND NUMBERS*/
+        document.getElementByID("paragraph6").innerHTML = ("The answer is: " + numB * numA);
+        document.getElementByID("paragraph6").innerHTML = (numA + "x" + numB + "=" + numA * numB);
+        /*Conditionals*/
+
+
+    </script>
 </body>
 </html>
-
