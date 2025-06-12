@@ -1,0 +1,202 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "virtualNetwork2": {
+            "type": "string",
+            "metadata": {
+                "description": "description"
+            }
+        },
+        "vm02StorageName": {
+            "type": "string",
+            "metadata": {
+                "description": "description"
+            }
+        },
+        "vm02NGSname": {
+            "type": "string",
+            "defaultValue":"vm02NSG",
+            "metadata": {
+                "description": "description"
+            }
+        },"vm02NetInterface": {
+            "type": "string",
+            "defaultValue":"vm02NIC",
+            "metadata": {
+                "description": "description"
+            }
+        },
+        "vm02Name": {
+            "type": "string",
+            "defaultValue":"vm02",
+            "metadata": {
+                "description": "description"
+            }
+        },
+        "vmUserName": {
+            "type": "string",
+            "metadata": {
+                "description": "description"
+            }
+        },
+        "vmPW": {
+            "type": "string",
+            "metadata": {
+                "description": "description"
+            }
+        }
+
+    },
+    "functions": [],
+    "variables": {
+    "vnet02Location": "West US",
+    "vnet2SubnetName": "workloadSubnet2",
+    "vnet02AddressPrefix": "10.0.0.0/16",
+    "vnet02Subnet1Address": "10.0.0.0/28"
+
+    },
+    "resources": [
+    {
+        "name": "[parameters('vm02StorageName')]",
+        "type": "Microsoft.Storage/storageAccounts",
+        "apiVersion": "2023-01-01",
+        "location": "[variables('vnet02Location')]",
+        "tags": {
+            "displayName": "[parameters('vm02StorageName')]"
+        },
+        "sku": {
+            "name": "Standard_LRS"
+        },
+        "kind": "Storage"
+    },
+    {
+        "name": "[parameters('vm02NGSname')]",
+        "type": "Microsoft.Network/networkSecurityGroups",
+        "apiVersion": "2023-04-01",
+        "location": "[variables('vnet02Location')]",
+        "properties": {
+            "securityRules": [
+                {
+                    "name": "AllowSSHFromSandBoxSubnet",
+                    "properties": {
+                        "description": "description",
+                        "protocol": "Tcp",
+                        "sourcePortRange": "*",
+                        "destinationPortRange": "22",
+                        "sourceAddressPrefix": "192.168.0.16/28",
+                        "destinationAddressPrefix": "[variables('vnet02Subnet1Address')]",
+                        "access": "Allow",
+                        "priority": 100,
+                        "direction": "Inbound"
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "name": "[parameters('virtualNetwork2')]",
+        "type": "Microsoft.Network/virtualNetworks",
+        "apiVersion": "2023-04-01",
+        "location": "[variables('vnet02Location')]",
+        "dependsOn": [
+            "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('vm02NGSname'))]"
+        ],
+        "tags": {
+            "displayName": "[parameters('virtualNetwork2')]"
+        },
+        "properties": {
+            "addressSpace": {
+                "addressPrefixes": [
+                    "[variables('vnet02AddressPrefix')]"
+                ]
+            },
+            "subnets": [
+                {
+                    "name": "[variables('vnet2SubnetName')]",
+                    "properties": {
+                        "addressPrefix": "[variables('vnet02Subnet1Address')]",
+                        "networkSecurityGroup": {
+                            "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('vm02NGSname'))]"
+                        }
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "name": "[parameters('vm02NetInterface')]",
+        "type": "Microsoft.Network/networkInterfaces",
+        "apiVersion": "2023-04-01",
+        "location": "[variables('vnet02Location')]",
+        "dependsOn": [
+             "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetwork2'))]"
+        ],
+        "tags": {
+            "displayName": "[parameters('vm02NetInterface')]"
+        },
+        "properties": {
+            "ipConfigurations": [
+                {
+                    "name": "ipConfig1",
+                    "properties": {
+                        "privateIPAllocationMethod": "Dynamic",
+                        "subnet": {
+                            "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetwork2'), variables('vnet2SubnetName'))]"
+                        }
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "name": "[parameters('vm02Name')]",
+        "type": "Microsoft.Compute/virtualMachines",
+        "apiVersion": "2023-03-01",
+        "location": "[variables('vnet02Location')]",
+        "dependsOn": [
+            "[resourceId('Microsoft.Network/networkInterfaces', parameters('vm02NetInterface'))]"
+        ],
+        "tags": {
+            "displayName": "[parameters('vm02Name')]"
+        },
+        "properties": {
+            "hardwareProfile": {
+                "vmSize": "Standard_A2_v2"
+            },
+            "osProfile": {
+                "computerName": "[parameters('vm02Name')]",
+                "adminUsername": "[parameters('vmUserName')]",
+                "adminPassword": "[parameters('vmPW')]"
+            },
+            "storageProfile": {
+                "imageReference": {
+                    "publisher": "Canonical",
+                    "offer": "UbuntuServer",
+                    "sku": "16.04-LTS",
+                    "version": "latest"
+                },
+                "osDisk": {
+                    "name": "ubuntuVM1-OSDisk",
+                    "caching": "ReadWrite",
+                    "createOption": "FromImage"
+                }
+            },
+            "networkProfile": {
+                "networkInterfaces": [
+                    {
+                        "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('vm02NetInterface'))]"
+                    }
+                ]
+            },
+            "diagnosticsProfile": {
+                "bootDiagnostics": {
+                    "enabled": true,
+                    "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', parameters('vm02StorageName'))).primaryEndpoints.blob]"
+                }
+            }
+        }
+    }
+    ],
+    "outputs": {}
+}
