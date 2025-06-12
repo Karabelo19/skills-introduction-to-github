@@ -1,0 +1,559 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "virtualNetwork1Name":{
+            "type":"string",
+            "defaultValue":"vnet01"
+        },
+        "virtualNetwork2Name":{
+            "type":"string",
+            "defaultValue":"vnet02"
+        },
+        "vnet1Location":{
+            "type":"string",
+            "defaultValue":"East US"
+        },
+        "vnet2Location": {
+            "type": "string",
+            "defaultValue": "West US"
+        },
+        "sandBoxbvmName": {
+            "type": "string",
+            "defaultValue":"sandBoxVm01",
+            "metadata": {
+                "description": "description"
+            }
+        },
+        "vmUserName": {
+            "type": "string",
+            "minLength":1,
+            "metadata": {
+                "description": "description"
+            }
+        },
+        "vmUserPass": {
+            "type": "string",
+            "minLength":1,
+            "metadata": {
+                "description": "description"
+            }
+        },
+        "SbVmStorageName": {
+            "type": "string",
+            "defaultValue":"sbvmstorage1",
+            "metadata": {
+                "description": "description"
+            }
+        },
+        "vnet1VMname": {
+            "type": "string",
+            "defaultValue":"vm01",
+            "metadata": {
+                "description": "description"
+            }
+        },
+        "vnet2VMname": {
+            "type": "string",
+            "defaultValue":"vm02",
+            "metadata": {
+                "description": "description"
+            }
+        }
+    },
+    "functions": [],
+    "variables": {
+        "vnet01Subnet1Name": "workloadSubnet1",
+        "vnet01Subnet2Name": "sandboxSubnet",
+        "vnet02SubnetName":  "workloadSubnet2",
+        "vnet01AddressPrefix": "192.168.0.0/16",
+        "vnet02AddressPrefix": "10.0.0.0/16",
+        "vnet01Subnet1Address": "192.168.0.16/28",
+        "vnet01Subnet2Address": "192.168.0.32/28",
+        "vnet02SubnetAddress": "10.0.0.16/28",
+        "vnet1Subnet1NSG": "vnet1NSG1",
+        "vnet1Subnet2NSG": "vnet1NSG2",
+        "vnet2SubnetNSG": "vnet2NSG",
+        "vnetNSGSSHRuleName": "AllowSandboxSSH",
+        "sandBoxVmOSImage": "sbVmOSimage",
+        "vnet1WLVmOSImage": "vm1OSimage",
+        "vnet2WLVmOSImage": "vm2OSimage",
+        "sandBoxVmPubIP": "sbVMIPAddress",
+        "sandBoxVmInterface": "sbVmNetIF",
+         "vnet1Vm01Interface": "vm1NetIF",
+        "vnet2Vm01Interface": "vm2NetIF",
+        "vnet1VMStorage1": "vnet1vm1storage",
+        "vnet2VMStorage1": "vnet2vm2storage"
+        
+    },
+    "resources": [
+        {
+            "name": "[variables('vnet1Subnet2NSG') ]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2023-04-01",
+            "location": "[parameters('vnet1Location')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "[variables('vnetNSGSSHRuleName')]",
+                        "properties": {
+                            "description": "description",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "[variables('vnet01Subnet2Address')]",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+
+            }
+        },
+        
+   {
+    "name": "[variables('vnet1Subnet1NSG')]",
+    "type": "Microsoft.Network/networkSecurityGroups",
+    "apiVersion": "2023-04-01",
+    "location": "[parameters('vnet1Location')]",
+    "properties": {
+        "securityRules": [
+            {
+                "name": "[variables('vnetNSGSSHRuleName')]",
+                "properties": {
+                    "description": "description",
+                    "protocol": "Tcp",
+                    "sourcePortRange": "*",
+                    "destinationPortRange": "22",
+                    "sourceAddressPrefix": "[variables('vnet01Subnet2Address')]",
+                    "destinationAddressPrefix": "[variables('vnet01Subnet1Address')]",
+                    "access": "Allow",
+                    "priority": 100,
+                    "direction": "Inbound"
+                }
+            }
+        ]
+    
+    }
+    },
+
+  {
+    "name": "[variables('vnet2SubnetNSG')]",
+    "type": "Microsoft.Network/networkSecurityGroups",
+    "apiVersion": "2023-04-01",
+    "location": "[parameters('vnet2Location')]",
+    "properties": {
+        "securityRules": [
+            {
+                "name": "[variables('vnetNSGSSHRuleName')]",
+                "properties": {
+                    "description": "description",
+                    "protocol": "Tcp",
+                    "sourcePortRange": "*",
+                    "destinationPortRange": "22",
+                    "sourceAddressPrefix": "[variables('vnet01Subnet2Address')]",
+                    "destinationAddressPrefix": "[variables('vnet02SubnetAddress')]",
+                    "access": "Allow",
+                    "priority": 100,
+                    "direction": "Inbound"
+                }
+            }
+        ]
+    }
+  },
+        {
+            "name": "[parameters('virtualNetwork1Name')]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2023-04-01",
+            "location": "[parameters('vnet1Location')]",
+            "tags": {
+                "displayName": "[parameters('virtualNetwork1Name')]"
+            },
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('vnet01AddressPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('vnet01Subnet1Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('vnet01Subnet1Address')]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('vnet1Subnet1NSG'))]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "[variables('vnet01Subnet2Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('vnet01Subnet2Address')]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('vnet1Subnet2NSG'))]"
+                            }
+                         
+                        }
+                    }
+                ]
+            
+            }
+        },
+        {
+            "name": "[parameters('virtualNetwork2Name')]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2023-04-01",
+            "location": "[parameters('vnet2Location')]",
+            "tags": {
+                "displayName": "[parameters('virtualNetwork2Name')]"
+            },
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('vnet02AddressPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('vnet02SubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[variables('vnet02SubnetAddress')]",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('vnet2SubnetNSG'))]"
+                            }
+                           
+                            }
+                         
+                        
+                    }
+                    
+                ]
+            }
+        },
+        {
+            "name":"vnet01/vnet1tovnet2Peering",
+            "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+            "apiVersion": "2023-04-01",
+            "location":"[parameters('vnet1Location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetwork1Name'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetwork2Name'))]"
+            ],
+            "properties":{
+                "allowForwardedTraffic": false,
+                "allowVirtualNetworkAccess": true,
+                "allowGatewayTransit": false,
+                "useRemoteGateways": false,
+                "remoteVirtualNetwork": {
+                    "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetwork2Name'))]"
+                }
+
+            }
+    
+        },
+        {
+            "name": "vnet02/vnet2tovnet2Peering",
+            "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+            "apiVersion": "2023-04-01",
+            "location": "[parameters('vnet2Location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetwork1Name'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetwork2Name'))]"
+            ],
+            "properties": {
+                "allowForwardedTraffic": false,
+                "allowVirtualNetworkAccess": true,
+                "allowGatewayTransit": false,
+                "useRemoteGateways": false,
+                "remoteVirtualNetwork": {
+                    "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetwork1Name'))]"
+                }
+
+            }
+
+        },
+      {
+        "name": "[parameters('SbVmStorageName')]",
+        "type": "Microsoft.Storage/storageAccounts",
+        "apiVersion": "2023-01-01",
+        "location": "[parameters('vnet1Location')]",
+        "tags": {
+            "displayName": "[parameters('SbVmStorageName')]"
+        },
+        "sku": {
+            "name": "Standard_LRS"
+        },
+        "kind": "Storage"
+      },
+        {
+            "name": "[variables('vnet2VMStorage1')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2023-01-01",
+            "location": "[parameters('vnet2Location')]",
+            "tags": {
+                "displayName": "[variables('vnet2VMStorage1')]"
+            },
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "kind": "Storage"
+        },
+        {
+            "name": "[variables('vnet1VMStorage1')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2023-01-01",
+            "location": "[parameters('vnet1Location')]",
+            "tags": {
+                "displayName": "[variables('vnet1VMStorage1')]"
+            },
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "kind": "Storage"
+        },
+      {
+        "name": "[variables('sandBoxVmPubIP')]",
+        "type": "Microsoft.Network/publicIPAddresses",
+        "apiVersion": "2023-04-01",
+        "location": "[parameters('vnet1Location')]",
+        "tags": {
+            "displayName": "[variables('sandBoxVmPubIP')]"
+        },
+        "properties": {
+            "publicIPAllocationMethod": "Dynamic",
+            "dnsSettings": {
+                "domainNameLabel": "ops3lab"
+            }
+        }
+      },
+      
+      
+      {
+        "name": "[variables('sandBoxVmInterface')]",
+        "type": "Microsoft.Network/networkInterfaces",
+        "apiVersion": "2023-04-01",
+        "location": "[parameters('vnet1Location')]",
+        "dependsOn": [
+            "[resourceId('Microsoft.Network/publicIPAddresses', variables('sandBoxVmPubIP'))]",
+            "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetwork1Name'))]"
+        ],
+        "tags": {
+            "displayName": "[variables('sandBoxVmInterface')]"
+        },
+        "properties": {
+            "ipConfigurations": [
+                {
+                    "name": "ipConfig1",
+                    "properties": {
+                        "privateIPAllocationMethod": "Dynamic",
+                        "publicIPAddress": {
+                            "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('sandBoxVmPubIP'))]"
+                        },
+                        "subnet": {
+                            "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetwork1Name'), variables('vnet01Subnet2Name'))]"
+                        }
+                    }
+                }
+            ]
+        }
+      },
+        {
+            "name": "[variables('vnet1Vm01Interface')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2023-04-01",
+            "location": "[parameters('vnet1Location')]",
+            "dependsOn": [
+                 "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetwork1Name'))]"
+            ],
+            "tags": {
+                "displayName": "[variables('vnet1Vm01Interface')]"
+            },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipConfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                        "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetwork1Name'), variables('vnet01Subnet1Name'))]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[variables('vnet2Vm01Interface')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2023-04-01",
+            "location": "[parameters('vnet2Location')]",
+            "dependsOn": [
+                 "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetwork2Name'))]"
+            ],
+            "tags": {
+                "displayName": "[variables('vnet2Vm01Interface')]"
+            },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipConfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                           
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetwork2Name'), variables('vnet02SubnetName'))]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+      {
+        "name": "[parameters('sandBoxbvmName')]",
+        "type": "Microsoft.Compute/virtualMachines",
+        "apiVersion": "2023-03-01",
+        "location": "[parameters('vnet1Location')]",
+        "dependsOn": [
+            "[resourceId('Microsoft.Network/networkInterfaces', variables('sandBoxVmInterface'))]"
+        ],
+        "tags": {
+            "displayName": "[parameters('sandBoxbvmName')]"
+        },
+        "properties": {
+            "hardwareProfile": {
+                "vmSize": "Standard_A2_v2"
+            },
+            "osProfile": {
+                "computerName": "[parameters('sandBoxbvmName')]",
+                "adminUsername": "[parameters('vmUserName')]",
+                "adminPassword": "[parameters('vmUserPass')]"
+            },
+            "storageProfile": {
+                "imageReference": {
+                    "publisher": "Canonical",
+                    "offer": "UbuntuServer",
+                    "sku": "16.04-LTS",
+                    "version": "latest"
+                },
+                "osDisk": {
+                    "name": "[variables('sandBoxVmOSImage')]",
+                    "caching": "ReadWrite",
+                    "createOption": "FromImage"
+                }
+            },
+            "networkProfile": {
+                "networkInterfaces": [
+                    {
+                        "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('sandBoxVmInterface'))]"
+                    }
+                ]
+            },
+            "diagnosticsProfile": {
+                "bootDiagnostics": {
+                    "enabled": true,
+                    "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', parameters('SbVmStorageName'))).primaryEndpoints.blob]"
+                }
+            }
+        }
+      },
+        {
+            "name": "[parameters('vnet1VMname')]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2023-03-01",
+            "location": "[parameters('vnet1Location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('vnet1Vm01Interface'))]"
+            ],
+            "tags": {
+                "displayName": "[parameters('vnet1VMname')]"
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "Standard_A2_v2"
+                },
+                "osProfile": {
+                    "computerName": "[parameters('vnet1VMname')]",
+                    "adminUsername": "[parameters('vmUserName')]",
+                    "adminPassword": "[parameters('vmUserPass')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "Canonical",
+                        "offer": "UbuntuServer",
+                        "sku": "16.04-LTS",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "[variables('vnet1WLVmOSImage')]",
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vnet1Vm01Interface'))]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true,
+                        "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/',variables('vnet1VMStorage1'))).primaryEndpoints.blob]"
+                    }
+                }
+            }
+        },
+        {
+            "name": "[parameters('vnet2VMname')]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2023-03-01",
+            "location": "[parameters('vnet2Location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('vnet2Vm01Interface'))]"
+            ],
+            "tags": {
+                "displayName": "[parameters('vnet2VMname')]"
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "Standard_A2_v2"
+                },
+                "osProfile": {
+                    "computerName": "[parameters('vnet2VMname')]",
+                    "adminUsername": "[parameters('vmUserName')]",
+                    "adminPassword": "[parameters('vmUserPass')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "Canonical",
+                        "offer": "UbuntuServer",
+                        "sku": "16.04-LTS",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "[variables('vnet2WLVmOSImage')]",
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vnet2Vm01Interface'))]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true,
+                        "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('vnet2VMStorage1'))).primaryEndpoints.blob]"
+                    }
+                }
+            }
+        }
+    ],
+    "outputs": {}
+}
