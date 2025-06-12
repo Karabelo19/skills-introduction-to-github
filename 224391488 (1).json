@@ -1,0 +1,758 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "primaryVNetName": {
+      "type": "string",
+      "defaultValue": "PrimaryVNet",
+      "metadata": {
+        "description": "Name of the primary virtual network"
+      }
+    },
+    "primaryVNetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "192.168.0.0/16",
+      "metadata": {
+        "description": "Address space for the primary virtual network"
+      }
+    },
+    "webSubnetName": {
+      "type": "string",
+      "defaultValue": "WebSubnet",
+      "metadata": {
+        "description": "Name of the web tier subnet"
+      }
+    },
+    "webSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "192.168.1.0/24",
+      "metadata": {
+        "description": "Address prefix for the web tier subnet"
+      }
+    },
+    "appSubnetName": {
+      "type": "string",
+      "defaultValue": "AppSubnet",
+      "metadata": {
+        "description": "Name of the application tier subnet"
+      }
+    },
+    "appSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "192.168.2.0/24",
+      "metadata": {
+        "description": "Address prefix for the application tier subnet"
+      }
+    },
+    "dbSubnetName": {
+      "type": "string",
+      "defaultValue": "DbSubnet",
+      "metadata": {
+        "description": "Name of the database tier subnet"
+      }
+    },
+    "dbSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "192.168.3.0/24",
+      "metadata": {
+        "description": "Address prefix for the database tier subnet"
+      }
+    },
+    "devOpsVNetName": {
+      "type": "string",
+      "defaultValue": "DevOpsVNet",
+      "metadata": {
+        "description": "Name of the DevOps virtual network"
+      }
+    },
+    "devOpsVNetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.1.0.0/16",
+      "metadata": {
+        "description": "Address space for the DevOps virtual network"
+      }
+    },
+    "devOpsSubnetName": {
+      "type": "string",
+      "defaultValue": "DevOpsSubnet",
+      "metadata": {
+        "description": "Name of the DevOps subnet"
+      }
+    },
+    "devOpsSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.1.3.0/24",
+      "metadata": {
+        "description": "Address prefix for the DevOps subnet"
+      }
+    },
+    "webVMName": {
+      "type": "string",
+      "defaultValue": "webVM",
+      "metadata": {
+        "description": "Name of the web tier virtual machine"
+      }
+    },
+    "appVMName": {
+      "type": "string",
+      "defaultValue": "appVM",
+      "metadata": {
+        "description": "Name of the application tier virtual machine"
+      }
+    },
+    "dbVMName": {
+      "type": "string",
+      "defaultValue": "dbVM",
+      "metadata": {
+        "description": "Name of the database tier virtual machine"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "Student@PS25$",
+      "metadata": {
+        "description": "Username for the virtual machines"
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "SSH",
+      "allowedValues": [
+        "SSH",
+        "Password"
+      ],
+      "metadata": {
+        "description": "Authentication type for the virtual machines"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the virtual machines (required if authenticationType is Password)"
+      }
+    },
+    "sshKeyData": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "SSH public key data for the virtual machines (required if authenticationType is SSH)"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources"
+      }
+    },
+    "webVMSize": {
+      "type": "string",
+      "defaultValue": "Standard_B1s",
+      "metadata": {
+        "description": "Size of the web tier virtual machine"
+      }
+    },
+    "appVMSize": {
+      "type": "string",
+      "defaultValue": "Standard_B2s",
+      "metadata": {
+        "description": "Size of the application tier virtual machine"
+      }
+    },
+    "dbVMSize": {
+      "type": "string",
+      "defaultValue": "Standard_B2s",
+      "metadata": {
+        "description": "Size of the database tier virtual machine"
+      }
+    }
+    },
+    "functions": [],
+    "variables": {
+        "webNsgName": "sg-WebSubnet-nsg",
+        "appNsgName": "sg-AppSubnet-nsg",
+        "dbNsgName": "sg-DbSubnet-nsg",
+        "devOpsNsgName": "sg-DevOpsSubnet-nsg",
+        "centosImages": "Centros7.9",
+        "webServerPublicIPName": "webVM-pip",
+        "primaryVNetId": " ",
+        "devOpsVNetId": " ",
+        "webSubnetId": " ",
+        "appSubnetId": " ",
+        "dbSubnetId": " ",
+        "webVMNicName": "web-nic",
+        "appVMNicName": "app-nic",
+        "dbVMNicName": "db-nic",
+        "vnetPeeringName1": ""
+
+    },
+    "resources": [
+    {
+
+    "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2023-04-01",
+      "name": "[parameters('primaryVNetName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('primaryVNetAddressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('webSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('webSubnetPrefix')]"
+            }
+          },
+          {
+            "name": "[parameters('appSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('appSubnetPrefix')]"
+            }
+          },
+         {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2020-11-01",
+            "name": "[variables('Nsg1Name')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "AllowSSHFromDevOps",
+                        "properties": {
+                            "priority": 100,
+                            "direction": "Inbound",
+                            "access": "Allow",
+                            "securityRules": [],
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefixes": [
+                                "[variables('SubnetVnet2AdressPrefix')]"
+                            ],
+                            "destinationAddressPrefix": "VirtualNetwork"
+                        }
+                    },
+                    {
+                        "name": "AllowHTTP",
+                        "properties": {
+                            "priority": 110,
+                            "direction": "Inbound",
+                            "access": "Allow",
+                            "securityRules": [],
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "80",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "Internet"
+                        }
+                    },
+                    {
+                        "name": "AllowHTTPS",
+                        "properties": {
+                            "priority": 120,
+                            "direction": "Inbound",
+                            "access": "Allow",
+                            "securityRules": [],
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "443",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "Internet"
+                        }
+                    },
+                    {
+                        "name": "AllowInternalSSHToApp",
+                        "properties": {
+                            "priority": 200,
+                            "direction": "Outbound",
+                            "access": "Allow",
+                            "securityRules": [],
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[reference(resourceId('Microsoft.Network/virtualNetworks/subnets', variables('Vnet1Name'), 'webSubnet')).properties.addressPrefix]"
+                        }
+                    },
+                    {
+                        "name": "AllowInternalSSHToDB",
+                        "properties": {
+                            "priority": 200,
+                            "direction": "Outbound",
+                            "access": "Allow",
+                            "securityRules": [],
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "VirtualNetwork",
+                            "destinationAddressPrefix": "[reference(resourceId('Microsoft.Network/virtualNetworks/subnets', variables('Vnet1Name'), 'webSubnet')).properties.addressPrefix]"
+                        }
+                    },
+                    {
+                        "name": "DenyAllInbound",
+                        "properties": {
+                            "priority": 300,
+                            "direction": "Inbound",
+                            "access": "Deny",
+                            "securityRules": [],
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*"
+                        }
+                    },
+                    {
+                        "name": "DenyAllOutbound",
+                        "properties": {
+                            "priority": 300,
+                            "direction": "Outbound",
+                            "access": "Deny",
+                            "securityRules": [],
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+
+        "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2023-04-01",
+      "name": "[parameters('devOpsVNetName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('devOpsVNetAddressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('devOpsSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('devOpsSubnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+      "apiVersion": "2023-04-01",
+      "name": "[concat(parameters('primaryVNetName'), '/to', parameters('devOpsVNetName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "allowVirtualNetworkAccess": true,
+        "allowForwardedTraffic": false,
+        "remoteVirtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('devOpsVNetName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('primaryVNetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('devOpsVNetName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+      "apiVersion": "2023-04-01",
+      "name": "[concat(parameters('devOpsVNetName'), '/to', parameters('primaryVNetName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "allowVirtualNetworkAccess": true,
+        "allowForwardedTraffic": false,
+        "remoteVirtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('primaryVNetName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('primaryVNetName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('devOpsVNetName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2023-04-01",
+      "name": "[concat(parameters('primaryVNetName'), '-nsg')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "AllowDevOpsSSH",
+            "properties": {
+              "priority": 100,
+              "direction": "Inbound",
+              "access": "Allow",
+              "matchedCount": 0,
+              "destinationPortRange": "22",
+              "destinationAddressPrefix": "[parameters('webSubnetPrefix')]",
+              "sourceAddressPrefix": "[parameters('devOpsSubnetPrefix')]",
+              "protocol": "Tcp"
+            }
+          },
+          {
+            "name": "AllowWebTraffic",
+            "properties": {
+              "priority": 200,
+              "direction": "Inbound",
+              "access": "Allow",
+              "matchedCount": 0,
+              "destinationPortRanges": [
+                "80",
+                "443"
+              ],
+              "destinationAddressPrefix": "[parameters('webSubnetPrefix')]",
+              "sourceAddressPrefix": "Internet",
+              "protocol": "Tcp"
+            }
+          },
+          {
+            "name": "AllowInternalSSH",
+            "properties": {
+              "priority": 300,
+              "direction": "Inbound",
+              "access": "Allow",
+              "matchedCount": 0,
+              "destinationPort": 22,
+              "destinationAddressPrefixes": [
+                "[parameters('appSubnetPrefix')]",
+                "[parameters('dbSubnetPrefix')]"
+              ],
+              "sourceAddressPrefix": "[parameters('webSubnetPrefix')]",
+              "protocol": "Tcp"
+            }
+          },
+           {
+            "name": "AllowAppToDB",
+            "properties": {
+              "priority": 350,
+              "direction": "Inbound",
+              "access": "Allow",
+              "matchedCount": 0,
+              "destinationPort": 3306,  // Example: MySQL default port.  Change as needed.
+              "destinationAddressPrefix": "[parameters('dbSubnetPrefix')]",
+              "sourceAddressPrefix": "[parameters('appSubnetPrefix')]",
+              "protocol": "Tcp"
+            }
+          },
+          {
+            "name": "DenyAllInbound",
+            "properties": {
+              "priority": 400,
+              "direction": "Inbound",
+              "access": "Deny",
+              "matchedCount": 0,
+              "destinationAddressPrefix": "[parameters('primaryVNetAddressPrefix')]",
+              "sourceAddressPrefix": "Internet",
+              "protocol": "Tcp"
+            }
+          },
+          {
+            "name": "AllowInternalOutbound",
+            "properties": {
+              "priority": 100,
+              "direction": "Outbound",
+              "access": "Allow",
+              "matchedCount": 0,
+              "destinationAddressPrefix": "[parameters('primaryVNetAddressPrefix')]",
+              "sourceAddressPrefix": "[parameters('primaryVNetAddressPrefix')]",
+              "protocol": "Tcp"
+            }
+          },
+          {
+            "name": "AllowInternetOutbound",
+            "properties": {
+              "priority": 200,
+              "direction": "Outbound",
+              "access": "Allow",
+              "matchedCount": 0,
+              "destinationAddressPrefix": "Internet",
+              "sourceAddressPrefix": "[parameters('primaryVNetAddressPrefix')]",
+              "protocol": "Tcp"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2023-04-01",
+      "name": "[concat(parameters('webVMName'), '-nic')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig",
+            "properties": {
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('primaryVNetName'), parameters('webSubnetName'))]"
+              },
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('webVMName'), '-pip'))]"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('primaryVNetName'), '-nsg'))]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2023-04-01",
+      "name": "[concat(parameters('appVMName'), '-nic')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig",
+            "properties": {
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('primaryVNetName'), parameters('appSubnetName'))]"
+              },
+              "privateIPAllocationMethod": "Dynamic"
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('primaryVNetName'), '-nsg'))]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2023-04-01",
+      "name": "[concat(parameters('dbVMName'), '-nic')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig",
+            "properties": {
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('primaryVNetName'), parameters('dbSubnetName'))]"
+              },
+              "privateIPAllocationMethod": "Dynamic"
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('primaryVNetName'), '-nsg'))]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2023-04-01",
+      "name": "[concat(parameters('webVMName'), '-pip')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2023-03-01",
+      "name": "[parameters('webVMName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('webVMName'), '-nic'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('webVMSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('webVMName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[if(equals(parameters('authenticationType'), 'Password'), parameters('adminPassword'), null)]",
+          "linuxConfiguration": "[if(equals(parameters('osType'), 'Linux'), createObject('disablePasswordAuthentication', if(equals(parameters('authenticationType'), 'Password'), 'false', 'true'), 'ssh', createObject('publicKeys', createArray(createObject('keyData', parameters('sshKeyData')), 'path', concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')))), null)]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[split(variables('webVMOS'), ':')[0]]",
+            "offer": "[split(variables('webVMOS'), ':')[1]]",
+            "sku": "[split(variables('webVMOS'), ':')[2]]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "Standard_LRS"
+            }
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('webVMName'), '-nic'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2023-03-01",
+      "name": "[parameters('appVMName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('appVMName'), '-nic'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('appVMSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('appVMName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[if(equals(parameters('authenticationType'), 'Password'), parameters('adminPassword'), null)]",
+           "linuxConfiguration": "[if(equals(parameters('osType'), 'Linux'), createObject('disablePasswordAuthentication', if(equals(parameters('authenticationType'), 'Password'), 'false', 'true'), 'ssh', createObject('publicKeys', createArray(createObject('keyData', parameters('sshKeyData')), 'path', concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')))), null)]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[split(variables('appVMOS'), ':')[0]]",
+            "offer": "[split(variables('appVMOS'), ':')[1]]",
+            "sku": "[split(variables('appVMOS'), ':')[2]]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "FromImage",
+             "managedDisk": {
+              "storageAccountType": "Standard_LRS"
+            }
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('appVMName'), '-nic'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2023-03-01",
+      "name": "[parameters('dbVMName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('dbVMName'), '-nic'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('dbVMSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('dbVMName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[if(equals(parameters('authenticationType'), 'Password'), parameters('adminPassword'), null)]",
+          "linuxConfiguration": "[if(equals(parameters('osType'), 'Linux'), createObject('disablePasswordAuthentication', if(equals(parameters('authenticationType'), 'Password'), 'false', 'true'), 'ssh', createObject('publicKeys', createArray(createObject('keyData', parameters('sshKeyData')), 'path', concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')))), null)]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[split(variables('dbVMOS'), ':')[0]]",
+            "offer": "[split(variables('dbVMOS'), ':')[1]]",
+            "sku": "[split(variables('dbVMOS'), ':')[2]]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "FromImage",
+             "managedDisk": {
+              "storageAccountType": "Standard_LRS"
+            }
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('dbVMName'), '-nic'))]"
+            }
+          ]
+        }
+      }
+    }
+  ],
+
+"outputs":{
+     "webServerIP": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('webVMName'), '-pip'))).ipAddress]",
+      "description": "Public IP address of the web server"
+    },
+    "webServerSSHCommand": {
+      "type": "string",
+      "value": "[concat('ssh -i <key_path> ', parameters('adminUsername'), '@', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('webVMName'), '-pip'))).ipAddress)]",
+      "description": "SSH command to connect to the web server"
+    },
+    "webURL": {
+      "type": "string",
+      "value": "[concat('http://', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('webVMName'), '-pip'))).ipAddress)]",
+      "description": "HTTP URL for the web server"
+    },
+    "appServerSSHCommand": {
+      "type": "string",
+      "value": "[concat('ssh -i ~/.ssh/id_rsa ', parameters('adminUsername'), '@', reference(resourceId('Microsoft.Network/networkInterfaces', concat(parameters('appVMName'), '-nic'))).ipConfigurations[0].properties.privateIPAddress)]",
+      "description": "SSH command to connect to the application server from the web server"
+    },
+    "dbServerSSHCommand": {
+      "type": "string",
+      "value": "[concat('ssh -i ~/.ssh/id_rsa ', parameters('adminUsername'), '@', reference(resourceId('Microsoft.Network/networkInterfaces', concat(parameters('dbVMName'), '-nic'))).ipConfigurations[0].properties.privateIPAddress)]",
+      "description": "SSH command to connect tothe database server from the application server"
+    },
+    "databaseConnectionString": {
+      "type": "string",
+      "value": "[parameters('databaseConnectionString')]",
+      "description": "Database connection string"
+    },
+    "primaryVNetName": {
+      "type": "string",
+      "value": "[parameters('primaryVNetName')]",
+      "description": "Primary VNet Name"
+    },
+     "primaryVNetAddressSpace": {
+      "type": "string",
+      "value": "[parameters('primaryVNetAddressPrefix')]",
+      "description": "Primary VNet Address Space"
+    },
+    "devOpsVNetName": {
+      "type": "string",
+      "value": "[parameters('devOpsVNetName')]",
+      "description": "DevOps VNet Name"
+    },
+    "devOpsVNetAddressSpace": {
+      "type": "string",
+      "value": "[parameters('devOpsVNetAddressPrefix')]",
+      "description": "DevOps VNet Address Space"
+    },
+    "peeringStatus": {
+      "type": "string",
+      "value": "Succeeded",  
+      "description": "Peering Status (Assumed Succeeded)"
+    },
+    "sshKeyName": {
+      "type": "string",
+      "value": "[variables('sshKeyName')]",
+      "description": "Name of the SSH key"
+    },
+    "adminUsername": {
+      "type": "string",
+      "value": "[parameters('adminUsername')]",
+      "description": "Admin Username"
+    }
+
+}
+}
+}
+}
