@@ -1,0 +1,186 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2025-03-20",
+      "name": "myVirtualNetwork",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": ["10.0.0.0/16"]
+        },
+        "subnets": [
+          {
+            "name": "WebTierSubnet",
+            "properties": {
+              "addressPrefix": "10.0.1.0/24"
+            }
+          },
+          {
+            "name": "AppTierSubnet",
+            "properties": {
+              "addressPrefix": "10.0.2.0/24"
+            }
+          },
+          {
+            "name": "DbTierSubnet",
+            "properties": {
+              "addressPrefix": "10.0.3.0/24"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2025-03-20",
+      "name": "myNSG",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "AllowHTTP",
+            "properties": {
+              "priority": 100,
+              "direction": "Inbound",
+              "access": "Allow",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "WebASG"
+            }
+          },
+          {
+            "name": "AllowHTTPS",
+            "properties": {
+              "priority": 110,
+              "direction": "Inbound",
+              "access": "Allow",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "WebASG"
+            }
+          },
+          {
+            "name": "AllowAppTierHTTPS",
+            "properties": {
+              "priority": 120,
+              "direction": "Inbound",
+              "access": "Allow",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "10.0.1.0/24",
+              "destinationAddressPrefix": "10.0.2.0/24"
+            }
+          },
+          {
+            "name": "AllowDbTierSQL",
+            "properties": {
+              "priority": 130,
+              "direction": "Inbound",
+              "access": "Allow",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "1433",
+              "sourceAddressPrefix": "10.0.2.0/24",
+              "destinationAddressPrefix": "10.0.3.0/24"
+            }
+          },
+          {
+            "name": "DenyAll",
+            "properties": {
+              "priority": 140,
+              "direction": "Inbound",
+              "access": "Deny",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*"
+            }
+          }
+        ]
+      }
+    },
+  {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2025-03-20",
+      "name": "webLbPublicIP",
+      "location": "[resourceGroup().location]",
+      "properties": { 
+        "sku": { "name": "Standard"
+         },
+       "publicIPAllocationMethod": "Static" }
+    },
+    {
+      "type": "Microsoft.Network/loadBalancers",
+      "apiVersion": "2025-03-20",
+      "name": "webLoadBalancer",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "sku": { "name": "Standard" },
+        "frontendIPConfigurations": [{
+             "name": "webLbFrontend", 
+             "properties": {
+                 "publicIPAddress": { 
+                    "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'webLbPublicIP')]"
+                     }
+                      }
+                     }
+                     ],
+        "backendAddressPools": [{ "name": "webLbBackendPool" }],
+        "loadBalancingRules": [
+          {
+             "name": "LBRuleHTTP",
+              "properties": { 
+                "frontendIPConfiguration": { 
+                    "id": "[concat(resourceId('Microsoft.Network/loadBalancers', 'webLoadBalancer'), '/frontendIPConfigurations/webLbFrontend')]" 
+                    }, 
+          "backendAddressPool": {
+             "id": "[concat(resourceId('Microsoft.Network/loadBalancers', 'webLoadBalancer'), '/backendAddressPools/webLbBackendPool')]" 
+             },
+              "protocol": "Tcp", 
+              "frontendPort": 80,
+               "backendPort": 80,
+                "enableFloatingIP": false,
+                 "idleTimeoutInMinutes": 4, 
+                 "loadDistribution": "Default",
+                  "probe": {
+                     "id": "[concat(resourceId('Microsoft.Network/loadBalancers', 'webLoadBalancer'), '/probes/webHttpProbe')]" 
+                     } 
+                     } 
+                     },
+          { 
+            "name": "LBRuleHTTPS",
+           "properties": {
+             "frontendIPConfiguration": { 
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', 'webLoadBalancer'), '/frontendIPConfigurations/webLbFrontend')]" }, "backendAddressPool": { "id": "[concat(resourceId('Microsoft.Network/loadBalancers', 'webLoadBalancer'), '/backendAddressPools/webLbBackendPool')]" }, "protocol": "Tcp", "frontendPort": 443, "backendPort": 443, "enableFloatingIP": false, "idleTimeoutInMinutes": 4, "loadDistribution": "Default", "probe": { "id": "[concat(resourceId('Microsoft.Network/loadBalancers', 'webLoadBalancer'), '/probes/webHttpsProbe')]" } } }
+        ],
+        "probes": [
+          { 
+            "name": "webHttpProbe", 
+          "properties": { "protocol": "Http", 
+          "port": 80,
+           "requestPath": "/"
+            }
+            },
+          { 
+            "name": "webHttpsProbe", 
+          "properties": { 
+            "protocol": "Https",
+             "port": 443, 
+             "requestPath": "/" 
+             } 
+             }
+        ]
+      }
+    }
+  ]
+}
+
