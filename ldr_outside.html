@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>LDR Outside Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="container">
+    <h1>LDR Outside Monitoring</h1>
+    <p>Welcome, {{ session['username'] }}</p>
+   
+
+    <h2>Latest LDR Outside Reading</h2>
+    {% if latest_ldr is not none %}
+        <p>{{ latest_ldr }}</p>
+    {% else %}
+        <p>No data available</p>
+    {% endif %}
+
+    <h2>PIR Motion Status</h2>
+    {% if latest_pir is not none %}
+        <p>{% if latest_pir == 1 %}Motion Detected{% else %}No Motion{% endif %}</p>
+    {% else %}
+        <p>No data available</p>
+    {% endif %}
+
+    <h2>Plot Over Time</h2>
+    <img src="{{ plot_url }}" alt="LDR Outside Plot">
+
+    <h2>Alerts</h2>
+    <ul>
+        {% for alert in alerts %}
+            <li>{{ alert }}</li>  <!-- Display each alert -->
+        {% endfor %}
+    </ul>
+    <a href="{{ url_for('logout') }}">Logout</a>
+  </div>
+</body>
+</html>

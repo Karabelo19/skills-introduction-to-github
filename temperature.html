@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Temperature Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="container">
+    <h1>Temperature Dashboard</h1>
+    <p>Welcome, {{ session['username'] }}</p>
+
+    <h2>Latest Temperature</h2>
+    {% if latest is not none %}
+        <p>{{ latest }} °C</p>
+    {% else %}
+        <p>No data available</p>
+    {% endif %}
+
+    <h2>Plot Over Time</h2>
+    <img src="{{ plot_url }}" alt="Temperature Plot">
+
+    <h2>Alerts</h2>
+    <ul>
+        {% for alert in alerts %}
+            <li>{{ alert }}</li>  <!-- Display each alert -->
+        {% endfor %}
+    </ul>
+    <a href="{{ url_for('logout') }}">Logout</a>
+  </div>
+</body>
+</html>

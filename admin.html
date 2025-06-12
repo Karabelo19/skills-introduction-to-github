@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Admin Dashboard</h1>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    <h2>Registered Users</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>User ID</th>
+                <th>Username</th>
+                <th>Role</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user[0] }}</td> <!-- user_id -->
+                <td>{{ user[1] }}</td> <!-- username -->
+                <td>{{ user[2] }}</td> <!-- role -->
+                <td>
+                    <form action="{{ url_for('delete_user') }}" method="post" onsubmit="return confirm('Are you sure you want to delete {{ user[1] }}?');">
+                        <input type="hidden" name="username" value="{{ user[1] }}">
+                        <button type="submit">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+
+        <h2>Latest Sensor Data</h2>
+        <table>
+            <tr>
+                <th>Timestamp</th>
+                <th>Temperature (°C)</th>
+                <th>Humidity (%)</th>
+                <th>LDR Inside</th>
+                <th>LDR Outside</th>
+                <th>PIR Motion</th>
+                <th>Alert</th>
+            </tr>
+            {% for row in sensor_data %}
+            <tr>
+                <td>{{ row.timestamp }}</td>
+                <td>{{ row.temperature }}</td>
+                <td>{{ row.humidity }}</td>
+                <td>{{ row.ldr1 }}</td>
+                <td>{{ row.ldr2 }}</td>
+                <td>
+                    {% if row.pir == 1 %}
+                        Motion Detected
+                    {% else %}
+                        No Motion
+                    {% endif %}
+                </td>
+                <td>{{ row.alert }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <div class="plot">
+            <h2>Sensor Overview</h2>
+            <img src="{{ combined_plot }}" alt="Combined Sensor Data Plot">
+        </div>
+        
+        <!-- Add User Button -->
+        <div>
+            <a href="{{ url_for('add_user') }}">
+                <button>Add New User</button>
+            </a>
+            <a href="{{ url_for('delete_user') }}">
+                <button>Delete User</button>
+            </a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+
+    </div>
+</body>
+</html>

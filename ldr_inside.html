@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>LDR Inside Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="container">
+    <h1>LDR Inside Dashboard</h1>
+    <p>Welcome, {{ session['username'] }}</p>
+   
+    <h2>Latest LDR Inside Reading</h2>
+    {% if latest is not none %}
+        <p>{{ latest }}</p>
+    {% else %}
+        <p>No data available</p>
+    {% endif %}
+
+    <h2>Plot Over Time</h2>
+    <img src="{{ plot_url }}" alt="LDR Inside Plot">
+
+    <h2>Alerts</h2>
+    <ul>
+        {% for alert in alerts %}
+            <li>{{ alert }}</li>  <!-- Display each alert -->
+        {% endfor %}
+    </ul>
+    <a href="{{ url_for('logout') }}">Logout</a>
+
+  </div>
+</body>
+</html>
